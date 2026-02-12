@@ -400,6 +400,7 @@
         let currentGame = null;
         let gameLoop = null;
         let currentGameName = '';
+        let currentGameConfig = null;
         let userHasInteracted = false;
 
         // High Scores System
@@ -625,6 +626,12 @@
 
             handleKeyPress(e) {
                 if (this.gameOver) return;
+
+                // Prevent arrow keys from scrolling the page
+                if (e.key.startsWith('Arrow')) {
+                    e.preventDefault();
+                }
+
                 userHasInteracted = true;
 
                 if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && this.dy === 0) {
@@ -728,7 +735,11 @@
                 this.rightScore = 0;
                 this.keys = {};
 
-                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault();
+                    this.keys[e.key] = true;
+                    userHasInteracted = true;
+                });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls
@@ -874,7 +885,11 @@
                 this.gameOver = false;
                 this.gameOverAnnounced = false;
 
-                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault();
+                    this.keys[e.key] = true;
+                    userHasInteracted = true;
+                });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls
@@ -1078,6 +1093,11 @@
             handleKeyPress(e) {
                 if (this.gameOver) return;
 
+                // Prevent arrow keys from scrolling the page
+                if (e.key.startsWith('Arrow') || e.key === ' ') {
+                    e.preventDefault();
+                }
+
                 if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
                     this.currentX--;
                     if (this.collides()) this.currentX++;
@@ -1245,7 +1265,11 @@
                 this.shootCooldown = 0;
                 this.enemyShootTimer = 0;
 
-                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault();
+                    this.keys[e.key] = true;
+                    userHasInteracted = true;
+                });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls
@@ -1491,7 +1515,11 @@
                 this.spawnAsteroids(4);
 
                 // Keyboard controls
-                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault();
+                    this.keys[e.key] = true;
+                    userHasInteracted = true;
+                });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls (for mobile)
@@ -1987,23 +2015,28 @@
 
         function startRandomGame() {
             const randomGame = games[Math.floor(Math.random() * games.length)];
-            currentGameName = randomGame.name; // Store current game name for high scores
+            startSpecificGame(randomGame);
+        }
+
+        function startSpecificGame(gameConfig) {
+            currentGameConfig = gameConfig; // Store for restart
+            currentGameName = gameConfig.name; // Store current game name for high scores
             userHasInteracted = false; // Reset interaction flag
-            document.getElementById('gameTitle').textContent = randomGame.name;
-            document.getElementById('gameInstructions').textContent = randomGame.instructions;
-            document.getElementById('controls').textContent = randomGame.controls;
+            document.getElementById('gameTitle').textContent = gameConfig.name;
+            document.getElementById('gameInstructions').textContent = gameConfig.instructions;
+            document.getElementById('controls').textContent = gameConfig.controls;
 
             // Update canvas aria-label with current game
             const canvas = document.getElementById('gameCanvas');
-            canvas.setAttribute('aria-label', `${randomGame.name} game. ${randomGame.instructions}`);
+            canvas.setAttribute('aria-label', `${gameConfig.name} game. ${gameConfig.instructions}`);
 
             // Announce game start to screen readers
-            announceToScreenReader(`${randomGame.name} game loaded. ${randomGame.instructions}`);
+            announceToScreenReader(`${gameConfig.name} game loaded. ${gameConfig.instructions}`);
 
             // Load and display high scores for this game
-            updateLiveHighScores(randomGame.name);
+            updateLiveHighScores(gameConfig.name);
 
-            currentGame = new randomGame.class();
+            currentGame = new gameConfig.class();
 
             if (gameLoop) {
                 clearInterval(gameLoop);
@@ -2025,7 +2058,12 @@
                 clearInterval(gameLoop);
             }
             announceToScreenReader('Game restarted');
-            startRandomGame();
+            // Restart the SAME game, not a random one
+            if (currentGameConfig) {
+                startSpecificGame(currentGameConfig);
+            } else {
+                startRandomGame();
+            }
         }
 
         // Initialize the page
