@@ -26,8 +26,11 @@
 
         .container {
             text-align: center;
-            max-width: 800px;
+            max-width: 1200px;
             width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .logo {
@@ -155,6 +158,89 @@
             outline-offset: 4px;
         }
 
+        /* Live High Scores Sidebar */
+        .highscores-sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .highscores-sidebar h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            color: #ffffff;
+        }
+
+        #liveHighScoresList {
+            text-align: left;
+        }
+
+        .live-score-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .live-score-entry:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .live-score-entry:nth-child(1) { border-left: 3px solid #FFD700; } /* Gold */
+        .live-score-entry:nth-child(2) { border-left: 3px solid #C0C0C0; } /* Silver */
+        .live-score-entry:nth-child(3) { border-left: 3px solid #CD7F32; } /* Bronze */
+
+        .live-score-rank {
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 30px;
+        }
+
+        .live-score-username {
+            flex: 1;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .live-score-points {
+            font-weight: 600;
+            color: #ff006e;
+            margin-left: 10px;
+        }
+
+        /* Responsive layout */
+        @media (min-width: 1024px) {
+            .container {
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: center;
+                gap: 2rem;
+            }
+
+            .game-container {
+                flex: 0 0 auto;
+            }
+
+            .highscores-sidebar {
+                flex: 0 0 300px;
+                margin-top: 0;
+                position: sticky;
+                top: 20px;
+            }
+        }
+
         /* High Scores Modal */
         .modal {
             position: fixed;
@@ -263,6 +349,14 @@
                 </div>
             </section>
 
+            <!-- Live High Scores Sidebar -->
+            <aside class="highscores-sidebar" aria-labelledby="liveHighScoresTitle">
+                <h3 id="liveHighScoresTitle">🏆 Top Scores</h3>
+                <div id="liveHighScoresList">
+                    <p>Loading...</p>
+                </div>
+            </aside>
+
             <p class="footer">While you wait, enjoy a mini-game! Refresh the page for a different game.</p>
         </div>
 
@@ -308,6 +402,8 @@
                 const result = await response.json();
                 if (result.success) {
                     alert(`Score submitted! Check the high scores to see where you rank.`);
+                    // Refresh the live high scores display
+                    updateLiveHighScores(gameName);
                 }
             } catch (error) {
                 console.error('Error submitting score:', error);
@@ -331,6 +427,41 @@
             } catch (error) {
                 console.error('Error fetching all scores:', error);
                 return {};
+            }
+        }
+
+        async function updateLiveHighScores(gameName) {
+            const liveList = document.getElementById('liveHighScoresList');
+
+            if (!gameName) {
+                liveList.innerHTML = '<p style="text-align: center; opacity: 0.7;">Play to see high scores!</p>';
+                return;
+            }
+
+            liveList.innerHTML = '<p style="text-align: center; opacity: 0.7;">Loading...</p>';
+
+            try {
+                const scores = await getHighScores(gameName);
+
+                if (scores.length === 0) {
+                    liveList.innerHTML = '<p style="text-align: center; opacity: 0.7;">No scores yet.<br>Be the first!</p>';
+                    return;
+                }
+
+                let html = '';
+                scores.slice(0, 5).forEach((entry, index) => {
+                    const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                    html += `
+                        <div class="live-score-entry">
+                            <span class="live-score-rank">${medal || `#${index + 1}`}</span>
+                            <span class="live-score-username">${entry.username}</span>
+                            <span class="live-score-points">${entry.score}</span>
+                        </div>`;
+                });
+
+                liveList.innerHTML = html;
+            } catch (error) {
+                liveList.innerHTML = '<p style="text-align: center; opacity: 0.7; color: #ff006e;">Error loading scores</p>';
             }
         }
 
@@ -1833,6 +1964,9 @@
 
             // Announce game start to screen readers
             announceToScreenReader(`${randomGame.name} game loaded. ${randomGame.instructions}`);
+
+            // Load and display high scores for this game
+            updateLiveHighScores(randomGame.name);
 
             currentGame = new randomGame.class();
 
