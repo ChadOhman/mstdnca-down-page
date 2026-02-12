@@ -250,28 +250,19 @@
             margin-left: 10px;
         }
 
-        /* Responsive layout */
-        @media (min-width: 1200px) {
-            .container {
-                flex-direction: row;
-                align-items: flex-start;
-                justify-content: center;
-                gap: 2rem;
-                max-width: 1400px;
-                margin: 0 auto;
-            }
+        /* Keep vertical layout on all screen sizes */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
 
-            .game-container {
-                flex: 0 1 auto;
-                max-width: 700px;
-            }
+        .game-container {
+            width: 100%;
+        }
 
-            .highscores-sidebar {
-                flex: 0 0 280px;
-                margin-top: 0;
-                position: sticky;
-                top: 20px;
-            }
+        .highscores-sidebar {
+            width: 100%;
+            max-width: 600px;
         }
 
         /* High Scores Modal */
