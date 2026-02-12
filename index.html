@@ -368,7 +368,7 @@
                 <div class="controls" id="controls" aria-live="polite"></div>
                 <div role="group" aria-label="Game controls">
                     <button id="restartBtn" onclick="restartGame()" aria-label="Restart current game">Restart Game</button>
-                    <button onclick="location.reload()" aria-label="Refresh page to load a different random game">Try Another Game</button>
+                    <button onclick="tryAnotherGame()" aria-label="Load a different random game">Try Another Game</button>
                     <button onclick="showHighScores()" aria-label="View high scores">🏆 High Scores</button>
                 </div>
             </section>
@@ -2061,6 +2061,21 @@
             // Restart the SAME game, not a random one
             if (currentGameConfig) {
                 startSpecificGame(currentGameConfig);
+            } else {
+                startRandomGame();
+            }
+        }
+
+        function tryAnotherGame() {
+            if (gameLoop) {
+                clearInterval(gameLoop);
+            }
+            // Pick a different game (not the current one)
+            if (currentGameConfig) {
+                const otherGames = games.filter(game => game.name !== currentGameConfig.name);
+                const randomGame = otherGames[Math.floor(Math.random() * otherGames.length)];
+                announceToScreenReader(`Loading ${randomGame.name}`);
+                startSpecificGame(randomGame);
             } else {
                 startRandomGame();
             }
