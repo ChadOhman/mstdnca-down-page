@@ -154,6 +154,91 @@
             outline: 3px solid #ffffff;
             outline-offset: 4px;
         }
+
+        /* High Scores Modal */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #6364FF 0%, #563acc 100%);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .close {
+            color: #ffffff;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 20px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #ff006e;
+        }
+
+        #highScoresTitle {
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        .game-scores {
+            margin-bottom: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .game-scores h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+
+        .score-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .score-entry:nth-child(1) .score-rank { color: #FFD700; } /* Gold */
+        .score-entry:nth-child(2) .score-rank { color: #C0C0C0; } /* Silver */
+        .score-entry:nth-child(3) .score-rank { color: #CD7F32; } /* Bronze */
+
+        .score-rank {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .score-username {
+            flex: 1;
+            text-align: left;
+        }
+
+        .score-points {
+            font-weight: 600;
+            color: #ff006e;
+        }
     </style>
 </head>
 <body>
@@ -174,10 +259,20 @@
                 <div role="group" aria-label="Game controls">
                     <button id="restartBtn" onclick="restartGame()" aria-label="Restart current game">Restart Game</button>
                     <button onclick="location.reload()" aria-label="Refresh page to load a different random game">Try Another Game</button>
+                    <button onclick="showHighScores()" aria-label="View high scores">🏆 High Scores</button>
                 </div>
             </section>
 
             <p class="footer">While you wait, enjoy a mini-game! Refresh the page for a different game.</p>
+        </div>
+
+        <!-- High Scores Modal -->
+        <div id="highScoresModal" class="modal" style="display: none;" role="dialog" aria-labelledby="highScoresTitle" aria-modal="true">
+            <div class="modal-content">
+                <span class="close" onclick="closeHighScores()" aria-label="Close high scores">&times;</span>
+                <h2 id="highScoresTitle">🏆 High Scores</h2>
+                <div id="highScoresList"></div>
+            </div>
         </div>
     </main>
 
@@ -186,6 +281,126 @@
         const ctx = canvas.getContext('2d');
         let currentGame = null;
         let gameLoop = null;
+        let currentGameName = '';
+
+        // High Scores System
+        const SCORES_API = 'scores.php';
+
+        async function submitHighScore(gameName, score) {
+            const username = prompt('🏆 New High Score! Enter your name:');
+            if (!username || username.trim() === '') {
+                return;
+            }
+
+            try {
+                const response = await fetch(SCORES_API, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        game: gameName,
+                        username: username.trim(),
+                        score: score
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(`Score submitted! Check the high scores to see where you rank.`);
+                }
+            } catch (error) {
+                console.error('Error submitting score:', error);
+            }
+        }
+
+        async function getHighScores(gameName) {
+            try {
+                const response = await fetch(`${SCORES_API}?game=${encodeURIComponent(gameName)}`);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching scores:', error);
+                return [];
+            }
+        }
+
+        async function getAllHighScores() {
+            try {
+                const response = await fetch(SCORES_API);
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching all scores:', error);
+                return {};
+            }
+        }
+
+        async function showHighScores() {
+            const modal = document.getElementById('highScoresModal');
+            const scoresList = document.getElementById('highScoresList');
+
+            scoresList.innerHTML = '<p>Loading...</p>';
+            modal.style.display = 'flex';
+
+            const allScores = await getAllHighScores();
+
+            if (Object.keys(allScores).length === 0) {
+                scoresList.innerHTML = '<p>No high scores yet. Be the first to set a record!</p>';
+                return;
+            }
+
+            let html = '';
+            for (const [gameName, scores] of Object.entries(allScores)) {
+                if (scores.length > 0) {
+                    html += `<div class="game-scores">
+                        <h3>${gameName}</h3>`;
+
+                    scores.slice(0, 10).forEach((entry, index) => {
+                        const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
+                        html += `
+                            <div class="score-entry">
+                                <span class="score-rank">${medal} #${index + 1}</span>
+                                <span class="score-username">${entry.username}</span>
+                                <span class="score-points">${entry.score}</span>
+                            </div>`;
+                    });
+
+                    html += '</div>';
+                }
+            }
+
+            scoresList.innerHTML = html || '<p>No high scores yet!</p>';
+        }
+
+        function closeHighScores() {
+            document.getElementById('highScoresModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('highScoresModal');
+            if (event.target === modal) {
+                closeHighScores();
+            }
+        };
+
+        // Handle game over and high score submission
+        async function handleGameOver(game, score) {
+            if (game.highScoreSubmitted) return; // Prevent duplicate submissions
+            game.highScoreSubmitted = true;
+
+            // Check if score is > 0
+            if (score <= 0) return;
+
+            // Get current high scores
+            const highScores = await getHighScores(currentGameName);
+
+            // Check if score qualifies (top 10 or no scores yet)
+            if (highScores.length < 10 || score > highScores[highScores.length - 1].score) {
+                setTimeout(() => {
+                    submitHighScore(currentGameName, score);
+                }, 500); // Small delay for better UX
+            }
+        }
 
         // Game 1: Snake
         class SnakeGame {
@@ -281,6 +496,7 @@
                         window.announceToScreenReader(`Game Over! Final score: ${this.score}`);
                         this.gameOverAnnounced = true;
                     }
+                    handleGameOver(this, this.score);
                     return;
                 }
 
@@ -550,6 +766,7 @@
                         window.announceToScreenReader(`Game Over! Final score: ${this.score}`);
                         this.gameOverAnnounced = true;
                     }
+                    handleGameOver(this, this.score);
                 }
 
                 for (let c = 0; c < this.brickColumnCount; c++) {
@@ -693,6 +910,7 @@
                         window.announceToScreenReader(`Game Over! Final score: ${this.score}`);
                         this.gameOverAnnounced = true;
                     }
+                    handleGameOver(this, this.score);
                 }
             }
 
@@ -974,6 +1192,7 @@
                                     window.announceToScreenReader(`Game Over! Aliens invaded. Final score: ${this.score}`);
                                     this.gameOverAnnounced = true;
                                 }
+                                handleGameOver(this, this.score);
                             }
                         }
                     });
@@ -1007,6 +1226,7 @@
                             window.announceToScreenReader(`Game Over! You were hit. Final score: ${this.score}`);
                             this.gameOverAnnounced = true;
                         }
+                        handleGameOver(this, this.score);
                     }
                 });
 
@@ -1028,6 +1248,7 @@
                         window.announceToScreenReader(`Victory! All aliens defeated. Final score: ${this.score}`);
                         this.gameOverAnnounced = true;
                     }
+                    handleGameOver(this, this.score);
                 }
             }
 
@@ -1469,6 +1690,10 @@
                                     if (this.matches === 8 && !this.gameWonAnnounced && window.announceToScreenReader) {
                                         window.announceToScreenReader(`You Win! All pairs matched in ${this.moves} moves!`);
                                         this.gameWonAnnounced = true;
+                                        // For Memory Match, lower moves = better score, so invert it
+                                        // Max possible moves is 64 (8 pairs × 8 attempts), so use 100 - moves
+                                        const score = Math.max(0, 100 - this.moves);
+                                        handleGameOver(this, score);
                                     }
                                 } else {
                                     this.firstCard.flipped = false;
@@ -1597,6 +1822,7 @@
 
         function startRandomGame() {
             const randomGame = games[Math.floor(Math.random() * games.length)];
+            currentGameName = randomGame.name; // Store current game name for high scores
             document.getElementById('gameTitle').textContent = randomGame.name;
             document.getElementById('gameInstructions').textContent = randomGame.instructions;
             document.getElementById('controls').textContent = randomGame.controls;
