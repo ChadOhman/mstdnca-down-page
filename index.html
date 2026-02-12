@@ -986,13 +986,95 @@
                 ctx.fillStyle = '#535353';
                 ctx.fillRect(0, 180, canvas.width, 2);
 
-                // Dino
-                ctx.fillStyle = '#535353';
-                ctx.fillRect(this.dino.x, this.dino.y, this.dino.width, this.dino.height);
+                // Mastodon character (based on mstdn.ca mascot)
+                const x = this.dino.x;
+                const y = this.dino.y;
+                const w = this.dino.width;
+                const h = this.dino.height;
 
-                // Dino eye
+                // Body (beige/tan rounded rectangle)
+                ctx.fillStyle = '#c9b8a8';
+                ctx.beginPath();
+                ctx.roundRect(x + 5, y + 10, w - 10, h - 15, 8);
+                ctx.fill();
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Head (rounded)
+                ctx.fillStyle = '#c9b8a8';
+                ctx.beginPath();
+                ctx.arc(x + w/2, y + 8, 12, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Trunk
+                ctx.fillStyle = '#c9b8a8';
+                ctx.beginPath();
+                ctx.moveTo(x + w/2 - 3, y + 12);
+                ctx.quadraticCurveTo(x + w/2 - 5, y + 20, x + w/2 - 2, y + 25);
+                ctx.lineTo(x + w/2 + 2, y + 25);
+                ctx.quadraticCurveTo(x + w/2 + 5, y + 20, x + w/2 + 3, y + 12);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Left ear
+                ctx.fillStyle = '#c9b8a8';
+                ctx.beginPath();
+                ctx.ellipse(x + 5, y + 5, 6, 8, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                // Pink inner ear
+                ctx.fillStyle = '#ff69b4';
+                ctx.beginPath();
+                ctx.ellipse(x + 5, y + 5, 3, 5, -0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Right ear
+                ctx.fillStyle = '#c9b8a8';
+                ctx.beginPath();
+                ctx.ellipse(x + w - 5, y + 5, 6, 8, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                // Pink inner ear
+                ctx.fillStyle = '#ff69b4';
+                ctx.beginPath();
+                ctx.ellipse(x + w - 5, y + 5, 3, 5, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Eye (white with black pupil)
                 ctx.fillStyle = '#fff';
-                ctx.fillRect(this.dino.x + 30, this.dino.y + 5, 6, 6);
+                ctx.beginPath();
+                ctx.arc(x + w/2 + 3, y + 8, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#000';
+                ctx.beginPath();
+                ctx.arc(x + w/2 + 4, y + 7, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Happy mouth
+                ctx.strokeStyle = '#ff69b4';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(x + w/2 + 2, y + 12, 4, 0.2, Math.PI - 0.2);
+                ctx.stroke();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#000';
+
+                // Tail
+                ctx.beginPath();
+                ctx.moveTo(x + w - 8, y + h - 10);
+                ctx.quadraticCurveTo(x + w, y + h - 8, x + w - 2, y + h - 5);
+                ctx.stroke();
+
+                // Legs (simple lines)
+                ctx.beginPath();
+                ctx.moveTo(x + 12, y + h - 5);
+                ctx.lineTo(x + 12, y + h);
+                ctx.moveTo(x + w - 12, y + h - 5);
+                ctx.lineTo(x + w - 12, y + h);
+                ctx.stroke();
 
                 // Obstacles (cacti)
                 ctx.fillStyle = '#535353';
