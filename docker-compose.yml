@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  maintenance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mstdnca-maintenance:latest
+    container_name: mstdn-maintenance
+    ports:
+      - "8080:80"  # Map host port 8080 to container port 80
+    restart: unless-stopped
+    environment:
+      - TZ=America/Toronto  # Adjust to your timezone
+    labels:
+      - "com.mstdn.ca.service=maintenance"
+      - "com.mstdn.ca.description=Maintenance page for mstdn.ca"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - maintenance-net
+
+networks:
+  maintenance-net:
+    driver: bridge
+    name: mstdn-maintenance-network
+
+# Optional: Add volumes for SSL certificates if needed
+# volumes:
+#   - ./certs:/etc/nginx/certs:ro

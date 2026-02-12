@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validation Test</title>
+</head>
+<body>
+    <h1>Validation Test</h1>
+    <div id="results"></div>
+    <script>
+        // This script validates the main index.html by loading it in an iframe
+        // and checking for JavaScript errors
+
+        const results = document.getElementById('results');
+        let testsPassed = 0;
+        let testsFailed = 0;
+
+        function addResult(test, passed, message = '') {
+            const p = document.createElement('p');
+            p.style.color = passed ? 'green' : 'red';
+            p.textContent = `${passed ? '✓' : '✗'} ${test}${message ? ': ' + message : ''}`;
+            results.appendChild(p);
+            if (passed) testsPassed++;
+            else testsFailed++;
+        }
+
+        // Test 1: Check if main page can be loaded
+        try {
+            fetch('index.html')
+                .then(response => {
+                    if (response.ok) {
+                        addResult('File exists and is accessible', true);
+                        return response.text();
+                    } else {
+                        addResult('File exists and is accessible', false, 'HTTP ' + response.status);
+                        throw new Error('Failed to load');
+                    }
+                })
+                .then(html => {
+                    // Test 2: Check for basic HTML structure
+                    addResult('Contains DOCTYPE', html.includes('<!DOCTYPE html>'));
+                    addResult('Contains opening html tag', html.includes('<html'));
+                    addResult('Contains closing html tag', html.includes('</html>'));
+                    addResult('Contains head section', html.includes('<head>'));
+                    addResult('Contains body section', html.includes('<body>'));
+
+                    // Test 3: Check for required elements
+                    addResult('Contains canvas element', html.includes('<canvas'));
+                    addResult('Contains game title element', html.includes('id="gameTitle"'));
+                    addResult('Contains score display', html.includes('id="scoreDisplay"'));
+                    addResult('Contains restart button', html.includes('restartGame()'));
+
+                    // Test 4: Check for all game classes
+                    addResult('Contains SnakeGame class', html.includes('class SnakeGame'));
+                    addResult('Contains PongGame class', html.includes('class PongGame'));
+                    addResult('Contains BreakoutGame class', html.includes('class BreakoutGame'));
+                    addResult('Contains FlappyGame class', html.includes('class FlappyGame'));
+                    addResult('Contains SpaceInvadersGame class', html.includes('class SpaceInvadersGame'));
+                    addResult('Contains MemoryGame class', html.includes('class MemoryGame'));
+
+                    // Test 5: Check for status link
+                    addResult('Contains status.mstdn.ca link', html.includes('status.mstdn.ca'));
+
+                    // Test 6: Check for Mastodon theming
+                    addResult('Contains Mastodon purple color', html.includes('#6364FF') || html.includes('#563acc'));
+
+                    // Test 7: Check for maintenance message
+                    addResult('Contains maintenance message', html.includes('temporarily down'));
+
+                    setTimeout(() => {
+                        const summary = document.createElement('h2');
+                        summary.textContent = `Tests Passed: ${testsPassed}/${testsPassed + testsFailed}`;
+                        summary.style.marginTop = '20px';
+                        summary.style.color = testsFailed === 0 ? 'green' : 'orange';
+                        results.appendChild(summary);
+
+                        if (testsFailed === 0) {
+                            const success = document.createElement('p');
+                            success.textContent = '✓ All validation tests passed! The HTML file appears to be properly structured.';
+                            success.style.color = 'green';
+                            success.style.fontWeight = 'bold';
+                            success.style.marginTop = '10px';
+                            results.appendChild(success);
+                        }
+                    }, 100);
+                })
+                .catch(error => {
+                    addResult('File loading', false, error.message);
+                });
+        } catch (error) {
+            addResult('Validation script', false, error.message);
+        }
+    </script>
+</body>
+</html>

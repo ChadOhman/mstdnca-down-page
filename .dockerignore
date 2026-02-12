@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Claude Code
+.claude
+
+# Documentation (not needed in container)
+README.md
+QUICKSTART.md
+TESTING.md
+ACCESSIBILITY.md
+
+# Validation tools
+validate.html
+
+# Docker files (already handled by build)
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
