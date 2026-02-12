@@ -203,7 +203,45 @@
                 this.gameOver = false;
                 this.gameOverAnnounced = false;
 
+                // Touch support
+                this.touchStartX = 0;
+                this.touchStartY = 0;
+
                 document.addEventListener('keydown', this.handleKeyPress.bind(this));
+                canvas.addEventListener('touchstart', this.handleTouchStart.bind(this));
+                canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
+            }
+
+            handleTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                this.touchStartX = touch.clientX;
+                this.touchStartY = touch.clientY;
+            }
+
+            handleTouchEnd(e) {
+                if (this.gameOver) return;
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                const deltaX = touch.clientX - this.touchStartX;
+                const deltaY = touch.clientY - this.touchStartY;
+
+                // Swipe detection
+                if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                    // Horizontal swipe
+                    if (deltaX > 30 && this.dx === 0) {
+                        this.dx = 1; this.dy = 0; // Right
+                    } else if (deltaX < -30 && this.dx === 0) {
+                        this.dx = -1; this.dy = 0; // Left
+                    }
+                } else {
+                    // Vertical swipe
+                    if (deltaY > 30 && this.dy === 0) {
+                        this.dx = 0; this.dy = 1; // Down
+                    } else if (deltaY < -30 && this.dy === 0) {
+                        this.dx = 0; this.dy = -1; // Up
+                    }
+                }
             }
 
             randomFood() {
@@ -318,6 +356,37 @@
 
                 document.addEventListener('keydown', (e) => this.keys[e.key] = true);
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
+
+                // Touch controls
+                canvas.addEventListener('touchmove', this.handleTouchMove.bind(this));
+                canvas.addEventListener('touchstart', this.handleTouchMove.bind(this));
+            }
+
+            handleTouchMove(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                for (let i = 0; i < e.touches.length; i++) {
+                    const touch = e.touches[i];
+                    const x = touch.clientX - rect.left;
+                    const y = touch.clientY - rect.top;
+
+                    // Left half of screen controls left paddle
+                    if (x < canvas.width / 2) {
+                        this.leftPaddle.y = y - this.paddleHeight / 2;
+                        if (this.leftPaddle.y < 0) this.leftPaddle.y = 0;
+                        if (this.leftPaddle.y > canvas.height - this.paddleHeight) {
+                            this.leftPaddle.y = canvas.height - this.paddleHeight;
+                        }
+                    }
+                    // Right half controls right paddle
+                    else {
+                        this.rightPaddle.y = y - this.paddleHeight / 2;
+                        if (this.rightPaddle.y < 0) this.rightPaddle.y = 0;
+                        if (this.rightPaddle.y > canvas.height - this.paddleHeight) {
+                            this.rightPaddle.y = canvas.height - this.paddleHeight;
+                        }
+                    }
+                }
             }
 
             update() {
@@ -432,6 +501,22 @@
 
                 document.addEventListener('keydown', (e) => this.keys[e.key] = true);
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
+
+                // Touch controls
+                canvas.addEventListener('touchmove', this.handleTouchMove.bind(this));
+                canvas.addEventListener('touchstart', this.handleTouchMove.bind(this));
+            }
+
+            handleTouchMove(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                this.paddleX = x - this.paddleWidth / 2;
+                if (this.paddleX < 0) this.paddleX = 0;
+                if (this.paddleX > canvas.width - this.paddleWidth) {
+                    this.paddleX = canvas.width - this.paddleWidth;
+                }
             }
 
             update() {
@@ -557,9 +642,42 @@
                 this.dropCounter = 0;
                 this.dropInterval = 30; // Drop every 30 frames (0.5 seconds at 60fps)
 
+                // Touch controls
+                this.touchLeft = false;
+                this.touchRight = false;
+                this.touchDown = false;
+                this.touchRotate = false;
+                this.lastTouchAction = 0;
+
                 this.newPiece();
 
                 document.addEventListener('keydown', this.handleKeyPress.bind(this));
+                canvas.addEventListener('touchstart', this.handleTouchStart.bind(this));
+                canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
+            }
+
+            handleTouchStart(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+
+                // Bottom quarter of screen has touch controls
+                if (y > canvas.height * 0.75) {
+                    const zone = Math.floor(x / (canvas.width / 4));
+                    if (zone === 0) this.handleKeyPress({key: 'a'}); // Left
+                    else if (zone === 1) this.handleKeyPress({key: 'd'}); // Right
+                    else if (zone === 2) this.handleKeyPress({key: 's'}); // Down
+                    else if (zone === 3) this.handleKeyPress({key: 'w'}); // Rotate
+                } else {
+                    // Tap anywhere else to rotate
+                    this.handleKeyPress({key: 'w'});
+                }
+            }
+
+            handleTouchEnd(e) {
+                e.preventDefault();
             }
 
             newPiece() {
@@ -750,6 +868,59 @@
 
                 document.addEventListener('keydown', (e) => this.keys[e.key] = true);
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
+
+                // Touch controls
+                canvas.addEventListener('touchstart', this.handleTouchStart.bind(this));
+                canvas.addEventListener('touchmove', this.handleTouchMove.bind(this));
+                canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
+            }
+
+            handleTouchStart(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+
+                // Tap to shoot
+                if (!this.keys['touchShoot']) {
+                    this.keys[' '] = true;
+                    this.keys['touchShoot'] = true;
+                    setTimeout(() => {
+                        this.keys[' '] = false;
+                        this.keys['touchShoot'] = false;
+                    }, 100);
+                }
+
+                // Left/right movement
+                if (x < canvas.width / 3) {
+                    this.keys['ArrowLeft'] = true;
+                } else if (x > canvas.width * 2/3) {
+                    this.keys['ArrowRight'] = true;
+                }
+            }
+
+            handleTouchMove(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+
+                // Reset keys
+                this.keys['ArrowLeft'] = false;
+                this.keys['ArrowRight'] = false;
+
+                // Set based on position
+                if (x < canvas.width / 3) {
+                    this.keys['ArrowLeft'] = true;
+                } else if (x > canvas.width * 2/3) {
+                    this.keys['ArrowRight'] = true;
+                }
+            }
+
+            handleTouchEnd(e) {
+                e.preventDefault();
+                this.keys['ArrowLeft'] = false;
+                this.keys['ArrowRight'] = false;
             }
 
             update() {
@@ -900,190 +1071,328 @@
             }
         }
 
-        // Game 6: Dinosaur Runner (Chrome Dino)
-        class DinoGame {
+        // Game 6: Asteroids
+        class AsteroidsGame {
             constructor() {
                 canvas.width = 600;
-                canvas.height = 200;
+                canvas.height = 400;
 
-                this.dino = { x: 50, y: 140, width: 40, height: 40, velocityY: 0, jumping: false };
-                this.gravity = 0.6;
-                this.jumpPower = -12;
-                this.obstacles = [];
+                this.ship = {
+                    x: canvas.width / 2,
+                    y: canvas.height / 2,
+                    angle: 0,
+                    rotation: 0,
+                    velocityX: 0,
+                    velocityY: 0,
+                    thrust: false,
+                    size: 15
+                };
+
+                this.bullets = [];
+                this.asteroids = [];
                 this.score = 0;
                 this.gameOver = false;
                 this.gameOverAnnounced = false;
-                this.speed = 5;
-                this.frameCount = 0;
+                this.keys = {};
+                this.shootCooldown = 0;
+                this.level = 1;
 
-                document.addEventListener('keydown', (e) => {
-                    if ((e.key === ' ' || e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && !this.dino.jumping && !this.gameOver) {
-                        this.dino.velocityY = this.jumpPower;
-                        this.dino.jumping = true;
-                    }
-                });
+                // Touch controls
+                this.touchLeft = false;
+                this.touchRight = false;
+                this.touchThrust = false;
+                this.touchShoot = false;
 
-                document.addEventListener('click', () => {
-                    if (!this.dino.jumping && !this.gameOver) {
-                        this.dino.velocityY = this.jumpPower;
-                        this.dino.jumping = true;
+                // Spawn initial asteroids
+                this.spawnAsteroids(4);
+
+                // Keyboard controls
+                document.addEventListener('keydown', (e) => this.keys[e.key] = true);
+                document.addEventListener('keyup', (e) => this.keys[e.key] = false);
+
+                // Touch controls (for mobile)
+                canvas.addEventListener('touchstart', this.handleTouchStart.bind(this));
+                canvas.addEventListener('touchend', this.handleTouchEnd.bind(this));
+                canvas.addEventListener('touchmove', (e) => e.preventDefault());
+            }
+
+            handleTouchStart(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const touches = e.touches;
+
+                for (let i = 0; i < touches.length; i++) {
+                    const x = touches[i].clientX - rect.left;
+                    const y = touches[i].clientY - rect.top;
+
+                    // Left side = rotate left
+                    if (x < canvas.width / 4) {
+                        this.touchLeft = true;
                     }
-                });
+                    // Right-left side = rotate right
+                    else if (x < canvas.width / 2) {
+                        this.touchRight = true;
+                    }
+                    // Right-middle = thrust
+                    else if (x < canvas.width * 3/4) {
+                        this.touchThrust = true;
+                    }
+                    // Right side = shoot
+                    else {
+                        this.touchShoot = true;
+                    }
+                }
+            }
+
+            handleTouchEnd(e) {
+                e.preventDefault();
+                this.touchLeft = false;
+                this.touchRight = false;
+                this.touchThrust = false;
+                this.touchShoot = false;
+            }
+
+            spawnAsteroids(count) {
+                for (let i = 0; i < count; i++) {
+                    let x, y;
+                    do {
+                        x = Math.random() * canvas.width;
+                        y = Math.random() * canvas.height;
+                    } while (this.distance(x, y, this.ship.x, this.ship.y) < 100);
+
+                    this.asteroids.push({
+                        x: x,
+                        y: y,
+                        velocityX: (Math.random() - 0.5) * 2,
+                        velocityY: (Math.random() - 0.5) * 2,
+                        radius: 30,
+                        vertices: this.generateAsteroidVertices(30)
+                    });
+                }
+            }
+
+            generateAsteroidVertices(radius) {
+                const vertices = [];
+                const numVertices = 8 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < numVertices; i++) {
+                    const angle = (i / numVertices) * Math.PI * 2;
+                    const variance = radius * (0.7 + Math.random() * 0.3);
+                    vertices.push({ angle, distance: variance });
+                }
+                return vertices;
+            }
+
+            distance(x1, y1, x2, y2) {
+                return Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
             }
 
             update() {
                 if (this.gameOver) return;
 
-                // Update dino
-                this.dino.velocityY += this.gravity;
-                this.dino.y += this.dino.velocityY;
+                // Rotation (keyboard and touch)
+                if (this.keys['ArrowLeft'] || this.keys['a'] || this.keys['A'] || this.touchLeft) {
+                    this.ship.rotation = -0.1;
+                } else if (this.keys['ArrowRight'] || this.keys['d'] || this.keys['D'] || this.touchRight) {
+                    this.ship.rotation = 0.1;
+                } else {
+                    this.ship.rotation = 0;
+                }
+                this.ship.angle += this.ship.rotation;
 
-                // Ground collision
-                if (this.dino.y >= 140) {
-                    this.dino.y = 140;
-                    this.dino.velocityY = 0;
-                    this.dino.jumping = false;
+                // Thrust (keyboard and touch)
+                this.ship.thrust = this.keys['ArrowUp'] || this.keys['w'] || this.keys['W'] || this.touchThrust;
+                if (this.ship.thrust) {
+                    this.ship.velocityX += Math.cos(this.ship.angle) * 0.15;
+                    this.ship.velocityY += Math.sin(this.ship.angle) * 0.15;
                 }
 
-                // Spawn obstacles
-                this.frameCount++;
-                if (this.frameCount % 90 === 0) {
-                    const height = 20 + Math.random() * 30;
-                    this.obstacles.push({ x: canvas.width, width: 20, height: height });
+                // Apply friction
+                this.ship.velocityX *= 0.99;
+                this.ship.velocityY *= 0.99;
+
+                // Update ship position
+                this.ship.x += this.ship.velocityX;
+                this.ship.y += this.ship.velocityY;
+
+                // Wrap around screen
+                if (this.ship.x < 0) this.ship.x = canvas.width;
+                if (this.ship.x > canvas.width) this.ship.x = 0;
+                if (this.ship.y < 0) this.ship.y = canvas.height;
+                if (this.ship.y > canvas.height) this.ship.y = 0;
+
+                // Shooting (keyboard and touch)
+                if (this.shootCooldown > 0) this.shootCooldown--;
+                if ((this.keys[' '] || this.touchShoot) && this.shootCooldown === 0) {
+                    this.bullets.push({
+                        x: this.ship.x + Math.cos(this.ship.angle) * this.ship.size,
+                        y: this.ship.y + Math.sin(this.ship.angle) * this.ship.size,
+                        velocityX: Math.cos(this.ship.angle) * 5,
+                        velocityY: Math.sin(this.ship.angle) * 5,
+                        life: 60
+                    });
+                    this.shootCooldown = 10;
                 }
 
-                // Update obstacles
-                for (let i = this.obstacles.length - 1; i >= 0; i--) {
-                    this.obstacles[i].x -= this.speed;
+                // Update bullets
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    this.bullets[i].x += this.bullets[i].velocityX;
+                    this.bullets[i].y += this.bullets[i].velocityY;
+                    this.bullets[i].life--;
 
-                    // Remove off-screen obstacles
-                    if (this.obstacles[i].x + this.obstacles[i].width < 0) {
-                        this.obstacles.splice(i, 1);
-                        this.score += 10;
-                        if (this.score % 100 === 0) this.speed += 0.5; // Speed up
+                    if (this.bullets[i].life <= 0 ||
+                        this.bullets[i].x < 0 || this.bullets[i].x > canvas.width ||
+                        this.bullets[i].y < 0 || this.bullets[i].y > canvas.height) {
+                        this.bullets.splice(i, 1);
                     }
+                }
 
-                    // Collision detection
-                    if (this.obstacles[i] &&
-                        this.dino.x < this.obstacles[i].x + this.obstacles[i].width &&
-                        this.dino.x + this.dino.width > this.obstacles[i].x &&
-                        this.dino.y + this.dino.height > canvas.height - this.obstacles[i].height) {
+                // Update asteroids
+                this.asteroids.forEach(asteroid => {
+                    asteroid.x += asteroid.velocityX;
+                    asteroid.y += asteroid.velocityY;
+
+                    // Wrap around screen
+                    if (asteroid.x < -asteroid.radius) asteroid.x = canvas.width + asteroid.radius;
+                    if (asteroid.x > canvas.width + asteroid.radius) asteroid.x = -asteroid.radius;
+                    if (asteroid.y < -asteroid.radius) asteroid.y = canvas.height + asteroid.radius;
+                    if (asteroid.y > canvas.height + asteroid.radius) asteroid.y = -asteroid.radius;
+                });
+
+                // Check bullet-asteroid collisions
+                for (let i = this.bullets.length - 1; i >= 0; i--) {
+                    for (let j = this.asteroids.length - 1; j >= 0; j--) {
+                        if (this.distance(this.bullets[i].x, this.bullets[i].y,
+                                         this.asteroids[j].x, this.asteroids[j].y) < this.asteroids[j].radius) {
+                            this.score += 10;
+
+                            // Split asteroid if large enough
+                            if (this.asteroids[j].radius > 15) {
+                                const newRadius = this.asteroids[j].radius / 2;
+                                for (let k = 0; k < 2; k++) {
+                                    this.asteroids.push({
+                                        x: this.asteroids[j].x,
+                                        y: this.asteroids[j].y,
+                                        velocityX: (Math.random() - 0.5) * 3,
+                                        velocityY: (Math.random() - 0.5) * 3,
+                                        radius: newRadius,
+                                        vertices: this.generateAsteroidVertices(newRadius)
+                                    });
+                                }
+                            }
+
+                            this.asteroids.splice(j, 1);
+                            this.bullets.splice(i, 1);
+                            break;
+                        }
+                    }
+                }
+
+                // Check ship-asteroid collisions
+                for (let i = 0; i < this.asteroids.length; i++) {
+                    if (this.distance(this.ship.x, this.ship.y,
+                                     this.asteroids[i].x, this.asteroids[i].y) < this.asteroids[i].radius + this.ship.size) {
                         this.gameOver = true;
                         if (!this.gameOverAnnounced && window.announceToScreenReader) {
                             window.announceToScreenReader(`Game Over! Final score: ${this.score}`);
                             this.gameOverAnnounced = true;
                         }
+                        return;
                     }
+                }
+
+                // Level complete - spawn more asteroids
+                if (this.asteroids.length === 0) {
+                    this.level++;
+                    this.spawnAsteroids(4 + this.level);
                 }
             }
 
             draw() {
-                // Sky
-                ctx.fillStyle = '#f7f7f7';
+                // Background
+                ctx.fillStyle = '#0a0a1a';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Ground
-                ctx.fillStyle = '#535353';
-                ctx.fillRect(0, 180, canvas.width, 2);
+                // Draw stars
+                ctx.fillStyle = '#ffffff';
+                for (let i = 0; i < 50; i++) {
+                    const x = (i * 73) % canvas.width;
+                    const y = (i * 137) % canvas.height;
+                    ctx.fillRect(x, y, 1, 1);
+                }
 
-                // Mastodon character (based on mstdn.ca mascot)
-                const x = this.dino.x;
-                const y = this.dino.y;
-                const w = this.dino.width;
-                const h = this.dino.height;
-
-                // Body (beige/tan rounded rectangle)
-                ctx.fillStyle = '#c9b8a8';
-                ctx.beginPath();
-                ctx.roundRect(x + 5, y + 10, w - 10, h - 15, 8);
-                ctx.fill();
-                ctx.strokeStyle = '#000';
+                // Draw ship
+                ctx.save();
+                ctx.translate(this.ship.x, this.ship.y);
+                ctx.rotate(this.ship.angle);
+                ctx.strokeStyle = '#6364FF';
+                ctx.fillStyle = '#6364FF';
                 ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // Head (rounded)
-                ctx.fillStyle = '#c9b8a8';
                 ctx.beginPath();
-                ctx.arc(x + w/2, y + 8, 12, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-
-                // Trunk
-                ctx.fillStyle = '#c9b8a8';
-                ctx.beginPath();
-                ctx.moveTo(x + w/2 - 3, y + 12);
-                ctx.quadraticCurveTo(x + w/2 - 5, y + 20, x + w/2 - 2, y + 25);
-                ctx.lineTo(x + w/2 + 2, y + 25);
-                ctx.quadraticCurveTo(x + w/2 + 5, y + 20, x + w/2 + 3, y + 12);
+                ctx.moveTo(this.ship.size, 0);
+                ctx.lineTo(-this.ship.size, this.ship.size / 2);
+                ctx.lineTo(-this.ship.size / 2, 0);
+                ctx.lineTo(-this.ship.size, -this.ship.size / 2);
                 ctx.closePath();
-                ctx.fill();
                 ctx.stroke();
-
-                // Left ear
-                ctx.fillStyle = '#c9b8a8';
-                ctx.beginPath();
-                ctx.ellipse(x + 5, y + 5, 6, 8, -0.3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                // Pink inner ear
-                ctx.fillStyle = '#ff69b4';
-                ctx.beginPath();
-                ctx.ellipse(x + 5, y + 5, 3, 5, -0.3, 0, Math.PI * 2);
                 ctx.fill();
 
-                // Right ear
-                ctx.fillStyle = '#c9b8a8';
-                ctx.beginPath();
-                ctx.ellipse(x + w - 5, y + 5, 6, 8, 0.3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-                // Pink inner ear
-                ctx.fillStyle = '#ff69b4';
-                ctx.beginPath();
-                ctx.ellipse(x + w - 5, y + 5, 3, 5, 0.3, 0, Math.PI * 2);
-                ctx.fill();
+                // Thrust flame
+                if (this.ship.thrust) {
+                    ctx.fillStyle = '#ff006e';
+                    ctx.beginPath();
+                    ctx.moveTo(-this.ship.size / 2, 0);
+                    ctx.lineTo(-this.ship.size * 1.5, this.ship.size / 3);
+                    ctx.lineTo(-this.ship.size * 1.5, -this.ship.size / 3);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                ctx.restore();
 
-                // Eye (white with black pupil)
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc(x + w/2 + 3, y + 8, 3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000';
-                ctx.beginPath();
-                ctx.arc(x + w/2 + 4, y + 7, 1.5, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Happy mouth
-                ctx.strokeStyle = '#ff69b4';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.arc(x + w/2 + 2, y + 12, 4, 0.2, Math.PI - 0.2);
-                ctx.stroke();
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#000';
-
-                // Tail
-                ctx.beginPath();
-                ctx.moveTo(x + w - 8, y + h - 10);
-                ctx.quadraticCurveTo(x + w, y + h - 8, x + w - 2, y + h - 5);
-                ctx.stroke();
-
-                // Legs (simple lines)
-                ctx.beginPath();
-                ctx.moveTo(x + 12, y + h - 5);
-                ctx.lineTo(x + 12, y + h);
-                ctx.moveTo(x + w - 12, y + h - 5);
-                ctx.lineTo(x + w - 12, y + h);
-                ctx.stroke();
-
-                // Obstacles (cacti)
-                ctx.fillStyle = '#535353';
-                this.obstacles.forEach(obstacle => {
-                    ctx.fillRect(obstacle.x, canvas.height - obstacle.height, obstacle.width, obstacle.height);
+                // Draw bullets
+                ctx.fillStyle = '#ffffff';
+                this.bullets.forEach(bullet => {
+                    ctx.beginPath();
+                    ctx.arc(bullet.x, bullet.y, 2, 0, Math.PI * 2);
+                    ctx.fill();
                 });
 
-                // Score
-                document.getElementById('scoreDisplay').textContent = `Score: ${this.score}`;
+                // Draw asteroids
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                this.asteroids.forEach(asteroid => {
+                    ctx.save();
+                    ctx.translate(asteroid.x, asteroid.y);
+                    ctx.beginPath();
+                    asteroid.vertices.forEach((vertex, i) => {
+                        const x = Math.cos(vertex.angle) * vertex.distance;
+                        const y = Math.sin(vertex.angle) * vertex.distance;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    });
+                    ctx.closePath();
+                    ctx.stroke();
+                    ctx.restore();
+                });
+
+                // Draw mobile touch zones (semi-transparent)
+                if ('ontouchstart' in window) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                    ctx.fillRect(0, canvas.height - 60, canvas.width / 4, 60);
+                    ctx.fillRect(canvas.width / 4, canvas.height - 60, canvas.width / 4, 60);
+                    ctx.fillRect(canvas.width / 2, canvas.height - 60, canvas.width / 4, 60);
+                    ctx.fillRect(canvas.width * 3/4, canvas.height - 60, canvas.width / 4, 60);
+
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('⟲', canvas.width / 8, canvas.height - 30);
+                    ctx.fillText('⟳', canvas.width * 3/8, canvas.height - 30);
+                    ctx.fillText('↑', canvas.width * 5/8, canvas.height - 30);
+                    ctx.fillText('●', canvas.width * 7/8, canvas.height - 30);
+                }
+
+                // Score and level
+                document.getElementById('scoreDisplay').textContent = `Score: ${this.score} | Level: ${this.level}`;
 
                 // Game over
                 if (this.gameOver) {
@@ -1094,7 +1403,7 @@
                     ctx.textAlign = 'center';
                     ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2);
                     ctx.font = '20px Arial';
-                    ctx.fillText(`Score: ${this.score}`, canvas.width / 2, canvas.height / 2 + 30);
+                    ctx.fillText(`Final Score: ${this.score}`, canvas.width / 2, canvas.height / 2 + 40);
                 }
             }
         }
@@ -1225,42 +1534,42 @@
                 name: 'Snake',
                 class: SnakeGame,
                 instructions: 'Use arrow keys or WASD to move. Eat the food and avoid hitting the walls or yourself!',
-                controls: 'Arrow Keys or WASD: Move | Goal: Eat food and grow longer',
+                controls: 'Keys: WASD/Arrows | Mobile: Swipe to change direction',
                 fps: 10
             },
             {
                 name: 'Pong',
                 class: PongGame,
                 instructions: 'Classic two-player Pong! First to score the most points wins.',
-                controls: 'Player 1: W/S keys | Player 2: Arrow Up/Down',
+                controls: 'Keys: W/S & Arrows | Mobile: Touch left/right side to move paddles',
                 fps: 60
             },
             {
                 name: 'Breakout',
                 class: BreakoutGame,
                 instructions: 'Break all the bricks with the ball! Don\'t let it fall.',
-                controls: 'Arrow Keys or A/D: Move paddle | Goal: Break all bricks',
+                controls: 'Keys: A/D or Arrows | Mobile: Touch to move paddle',
                 fps: 60
             },
             {
                 name: 'Tetris',
                 class: TetrisGame,
                 instructions: 'Classic Tetris! Rotate and drop blocks to clear lines.',
-                controls: 'Arrow Keys or WASD: Move/Rotate | S/Down: Drop faster | Goal: Clear lines',
+                controls: 'Keys: WASD/Arrows | Mobile: 4 touch zones at bottom (◀▶▼⟳)',
                 fps: 60
             },
             {
                 name: 'Space Invaders',
                 class: SpaceInvadersGame,
                 instructions: 'Defend Earth from the alien invasion!',
-                controls: 'Arrow Keys or A/D: Move | Spacebar: Shoot | Goal: Defeat all aliens',
+                controls: 'Keys: A/D & Space | Mobile: Touch sides to move, tap to shoot',
                 fps: 60
             },
             {
-                name: 'Dino Runner',
-                class: DinoGame,
-                instructions: 'Jump over cacti! Just like the Chrome offline game.',
-                controls: 'Spacebar, W, or Click: Jump | Goal: Avoid obstacles',
+                name: 'Asteroids',
+                class: AsteroidsGame,
+                instructions: 'Classic arcade space shooter! Destroy asteroids and survive.',
+                controls: 'WASD or Arrows: Rotate/Thrust | Space/Tap: Shoot | Touch: 4 zones on bottom',
                 fps: 60
             },
             {
