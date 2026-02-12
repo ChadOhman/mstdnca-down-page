@@ -2045,7 +2045,7 @@
             gameLoop = setInterval(() => {
                 currentGame.update();
                 currentGame.draw();
-            }, 1000 / randomGame.fps);
+            }, 1000 / gameConfig.fps);
 
             // Focus the canvas for keyboard interaction
             setTimeout(() => {
