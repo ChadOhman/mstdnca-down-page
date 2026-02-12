@@ -13,7 +13,17 @@
       "WebFetch(domain:mstdn.ca)",
       "WebFetch(domain:cdn.mstdn.ca)",
       "Bash(python3:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git push:*)",
+      "Bash(python:*)",
+      "Bash(plink -batch -pw \"Piano123\" root@134.122.46.135 \"ls -la /var/www/maintenance/\")",
+      "Bash(plink -pw \"Piano123\" root@134.122.46.135 \"ls -la /var/www/maintenance/\")",
+      "Bash(plink -hostkey \"ssh-ed25519 255 SHA256:ccYVFox5glsBuYsd7aCEQM5FyfqDq4Gv2zXlg49SKo4\" -pw \"Piano123\" root@134.122.46.135 \"ls -la /var/www/maintenance/\")",
+      "Bash(plink -hostkey \"ssh-ed25519 255 SHA256:ccYVFox5glsBuYsd7aCEQM5FyfqDq4Gv2zXlg49SKo4\" -pw \"Piano123\" root@134.122.46.135 \"cd /var/www/maintenance && ls -lh index.html\")",
+      "Bash(for i in {1..10})",
+      "Bash(do echo \"Attempt $i...\")",
+      "Bash(break)",
+      "Bash(done)"
     ]
   }
 }
