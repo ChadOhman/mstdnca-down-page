@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start index.html)",
+      "Bash(dir:*)",
+      "Bash(chmod:*)",
+      "Bash(git add:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(curl -X POST \"https://api.digitalocean.com/v2/droplets\" -H \"Content-Type: application/json\" -H \"Authorization: Bearer dop_v1_0f3f7554ca55068b22e80ba34ec1d2198878226af6fc244596944c36cc1aab03\" -d '{\n    \"\"name\"\": \"\"mstdn-maintenance\"\",\n    \"\"region\"\": \"\"tor1\"\",\n    \"\"size\"\": \"\"s-1vcpu-512mb-10gb\"\",\n    \"\"image\"\": \"\"ubuntu-22-04-x64\"\",\n    \"\"ssh_keys\"\": [],\n    \"\"backups\"\": false,\n    \"\"ipv6\"\": true,\n    \"\"monitoring\"\": true,\n    \"\"tags\"\": [\"\"maintenance\"\", \"\"mstdn-ca\"\"]\n  }')",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:mstdn.ca)",
+      "WebFetch(domain:cdn.mstdn.ca)",
+      "Bash(python3:*)",
+      "Bash(git rm:*)"
+    ]
+  }
+}

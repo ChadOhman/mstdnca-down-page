@@ -1,21 +1,41 @@
-# Editor and IDE files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# SSH Keys and Secrets
+droplet_key*
+*.pem
+*.key
+*.pub
 
-# Claude Code
-.claude/
+# Deployment scripts with sensitive info
+deploy*.sh
+deploy*.exp
+ssh_*.exp
+*_deploy.*
+
+# Environment and config files
+.env
+.env.*
+config.local.*
+
+# Backup and temporary files
+*.backup
+*.bak
+*.tmp
+*.b64
+
+# Data files
+scores.json
+
+# Deployment documentation with IPs/secrets
+DEPLOYMENT_INSTRUCTIONS.md
+CONSOLE_DEPLOY.sh
+PASTE_THIS.txt
+PROJECT_SUMMARY.md
 
 # OS files
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# Logs
-*.log
-
-# Temporary files
-*.tmp
-*.temp
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo

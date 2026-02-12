@@ -1,6 +1,6 @@
-# mstdn.ca Maintenance Page
+# Mastodon Maintenance Page with Mini-Games
 
-A fun, interactive maintenance page for the mstdn.ca Mastodon instance featuring 6 different mini-games that randomly display when users visit during downtime.
+A fun, interactive maintenance page for Mastodon instances featuring 7 different mini-games with a high score system. Games randomly display when users visit during downtime.
 
 ## Quick Start with Docker (Recommended)
 
@@ -23,10 +23,13 @@ See [DOCKER.md](DOCKER.md) for complete Docker deployment guide.
 
 ## Features
 
-- **6 Mini-Games**: Snake, Pong, Breakout, Flappy Bird, Space Invaders, and Memory Match
+- **7 Mini-Games**: Snake, Pong, Breakout, Tetris, Space Invaders, Asteroids, and Memory Match
+- **High Score System**: JSON file-based leaderboard (no database required)
+- **Live High Scores**: Always-visible sidebar showing top 5 scores for current game
 - **Random Selection**: Different game on each page refresh
 - **Mastodon-Themed**: Uses Mastodon's purple color scheme
-- **Status Link**: Direct link to status.mstdn.ca for maintenance updates
+- **Status Link**: Configurable link to your status page
+- **Touch Controls**: Full mobile/tablet support with touch and swipe gestures
 - **Mobile-Responsive**: Works on desktop and mobile devices
 - **Self-Contained**: Single HTML file with no external dependencies
 - **Proper HTTP Status**: Returns 503 Service Unavailable with Retry-After headers
@@ -34,12 +37,13 @@ See [DOCKER.md](DOCKER.md) for complete Docker deployment guide.
 
 ## Games Included
 
-1. **Snake** - Classic snake game. Use arrow keys to eat food and grow.
-2. **Pong** - Two-player pong. Player 1 uses W/S, Player 2 uses arrow keys.
-3. **Breakout** - Brick breaker. Use arrow keys to move the paddle.
-4. **Flappy Bird** - Tap space or click to navigate through pipes.
-5. **Space Invaders** - Defend against aliens. Arrow keys to move, space to shoot.
-6. **Memory Match** - Click to flip cards and match all pairs.
+1. **Snake** - Classic snake game. WASD/arrows or swipe to move.
+2. **Pong** - Two-player pong. W/S and arrows, or touch controls.
+3. **Breakout** - Brick breaker. A/D or arrows to move, touch to drag paddle.
+4. **Tetris** - Block stacking puzzle. WASD/arrows or touch zones.
+5. **Space Invaders** - Defend against aliens. A/D to move, space to shoot, or touch.
+6. **Asteroids** - Classic space shooter. WASD/arrows to rotate/thrust, space to shoot.
+7. **Memory Match** - Click or tap cards to match all pairs.
 
 ## Installation Instructions
 
