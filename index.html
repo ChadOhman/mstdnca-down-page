@@ -776,17 +776,41 @@
             }
 
             update() {
+                // Player controls left paddle
                 if (this.keys['w'] && this.leftPaddle.y > 0) {
                     this.leftPaddle.y -= 6;
                 }
                 if (this.keys['s'] && this.leftPaddle.y < canvas.height - this.paddleHeight) {
                     this.leftPaddle.y += 6;
                 }
-                if (this.keys['ArrowUp'] && this.rightPaddle.y > 0) {
-                    this.rightPaddle.y -= 6;
-                }
-                if (this.keys['ArrowDown'] && this.rightPaddle.y < canvas.height - this.paddleHeight) {
-                    this.rightPaddle.y += 6;
+
+                // AI controls right paddle (or player can override with arrow keys)
+                const aiActive = !this.keys['ArrowUp'] && !this.keys['ArrowDown'];
+                if (aiActive) {
+                    // AI follows ball with slight delay for challenge
+                    const paddleCenter = this.rightPaddle.y + this.paddleHeight / 2;
+                    const ballCenter = this.ball.y + this.ballSize / 2;
+                    const aiSpeed = 4.5; // Slightly slower than player for fairness
+
+                    if (ballCenter < paddleCenter - 10) {
+                        this.rightPaddle.y -= aiSpeed;
+                    } else if (ballCenter > paddleCenter + 10) {
+                        this.rightPaddle.y += aiSpeed;
+                    }
+
+                    // Keep AI paddle within bounds
+                    if (this.rightPaddle.y < 0) this.rightPaddle.y = 0;
+                    if (this.rightPaddle.y > canvas.height - this.paddleHeight) {
+                        this.rightPaddle.y = canvas.height - this.paddleHeight;
+                    }
+                } else {
+                    // Manual control
+                    if (this.keys['ArrowUp'] && this.rightPaddle.y > 0) {
+                        this.rightPaddle.y -= 6;
+                    }
+                    if (this.keys['ArrowDown'] && this.rightPaddle.y < canvas.height - this.paddleHeight) {
+                        this.rightPaddle.y += 6;
+                    }
                 }
 
                 this.ball.x += this.ball.dx;
