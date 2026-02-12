@@ -26,11 +26,12 @@
 
         .container {
             text-align: center;
-            max-width: 1200px;
+            max-width: 100%;
             width: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
+            padding: 0 10px;
         }
 
         .logo {
@@ -69,10 +70,12 @@
         .game-container {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
-            padding: 20px;
+            padding: 15px;
             margin: 2rem auto;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .game-title {
@@ -93,7 +96,34 @@
             display: block;
             margin: 0 auto;
             max-width: 100%;
+            width: 100%;
+            height: auto;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .game-container {
+                padding: 10px;
+                margin: 1rem auto;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .logo {
+                font-size: 2rem;
+            }
+
+            button {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+                margin: 5px 2px;
+            }
         }
 
         .score {
@@ -221,20 +251,23 @@
         }
 
         /* Responsive layout */
-        @media (min-width: 1024px) {
+        @media (min-width: 1200px) {
             .container {
                 flex-direction: row;
                 align-items: flex-start;
                 justify-content: center;
                 gap: 2rem;
+                max-width: 1400px;
+                margin: 0 auto;
             }
 
             .game-container {
-                flex: 0 0 auto;
+                flex: 0 1 auto;
+                max-width: 700px;
             }
 
             .highscores-sidebar {
-                flex: 0 0 300px;
+                flex: 0 0 280px;
                 margin-top: 0;
                 position: sticky;
                 top: 20px;
@@ -376,6 +409,7 @@
         let currentGame = null;
         let gameLoop = null;
         let currentGameName = '';
+        let userHasInteracted = false;
 
         // High Scores System
         const SCORES_API = 'scores.php';
@@ -519,8 +553,8 @@
             if (game.highScoreSubmitted) return; // Prevent duplicate submissions
             game.highScoreSubmitted = true;
 
-            // Check if score is > 0
-            if (score <= 0) return;
+            // Check if score is > 0 and user actually played
+            if (score <= 0 || !userHasInteracted) return;
 
             // Get current high scores
             const highScores = await getHighScores(currentGameName);
@@ -567,6 +601,7 @@
 
             handleTouchEnd(e) {
                 if (this.gameOver) return;
+                userHasInteracted = true;
                 e.preventDefault();
                 const touch = e.changedTouches[0];
                 const deltaX = touch.clientX - this.touchStartX;
@@ -599,6 +634,7 @@
 
             handleKeyPress(e) {
                 if (this.gameOver) return;
+                userHasInteracted = true;
 
                 if ((e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') && this.dy === 0) {
                     this.dx = 0; this.dy = -1;
@@ -701,7 +737,7 @@
                 this.rightScore = 0;
                 this.keys = {};
 
-                document.addEventListener('keydown', (e) => this.keys[e.key] = true);
+                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls
@@ -711,6 +747,7 @@
 
             handleTouchMove(e) {
                 e.preventDefault();
+                userHasInteracted = true;
                 const rect = canvas.getBoundingClientRect();
                 for (let i = 0; i < e.touches.length; i++) {
                     const touch = e.touches[i];
@@ -846,7 +883,7 @@
                 this.gameOver = false;
                 this.gameOverAnnounced = false;
 
-                document.addEventListener('keydown', (e) => this.keys[e.key] = true);
+                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls
@@ -856,6 +893,7 @@
 
             handleTouchMove(e) {
                 e.preventDefault();
+                userHasInteracted = true;
                 const rect = canvas.getBoundingClientRect();
                 const touch = e.touches[0];
                 const x = touch.clientX - rect.left;
@@ -1006,6 +1044,7 @@
 
             handleTouchStart(e) {
                 e.preventDefault();
+                userHasInteracted = true;
                 const rect = canvas.getBoundingClientRect();
                 const touch = e.touches[0];
                 const x = touch.clientX - rect.left;
@@ -1215,7 +1254,7 @@
                 this.shootCooldown = 0;
                 this.enemyShootTimer = 0;
 
-                document.addEventListener('keydown', (e) => this.keys[e.key] = true);
+                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls
@@ -1226,6 +1265,7 @@
 
             handleTouchStart(e) {
                 e.preventDefault();
+                userHasInteracted = true;
                 const rect = canvas.getBoundingClientRect();
                 const touch = e.touches[0];
                 const x = touch.clientX - rect.left;
@@ -1250,6 +1290,7 @@
 
             handleTouchMove(e) {
                 e.preventDefault();
+                userHasInteracted = true;
                 const rect = canvas.getBoundingClientRect();
                 const touch = e.touches[0];
                 const x = touch.clientX - rect.left;
@@ -1459,7 +1500,7 @@
                 this.spawnAsteroids(4);
 
                 // Keyboard controls
-                document.addEventListener('keydown', (e) => this.keys[e.key] = true);
+                document.addEventListener('keydown', (e) => { this.keys[e.key] = true; userHasInteracted = true; });
                 document.addEventListener('keyup', (e) => this.keys[e.key] = false);
 
                 // Touch controls (for mobile)
@@ -1470,6 +1511,7 @@
 
             handleTouchStart(e) {
                 e.preventDefault();
+                userHasInteracted = true;
                 const rect = canvas.getBoundingClientRect();
                 const touches = e.touches;
 
@@ -1794,6 +1836,7 @@
 
             handleClick(e) {
                 if (!this.canClick) return;
+                userHasInteracted = true;
 
                 const rect = canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -1954,6 +1997,7 @@
         function startRandomGame() {
             const randomGame = games[Math.floor(Math.random() * games.length)];
             currentGameName = randomGame.name; // Store current game name for high scores
+            userHasInteracted = false; // Reset interaction flag
             document.getElementById('gameTitle').textContent = randomGame.name;
             document.getElementById('gameInstructions').textContent = randomGame.instructions;
             document.getElementById('controls').textContent = randomGame.controls;
