@@ -900,24 +900,141 @@
             }
         }
 
-        // Game 6: Memory Match
-        class MemoryGame {
+        // Game 6: Dinosaur Runner (Chrome Dino)
+        class DinoGame {
             constructor() {
                 canvas.width = 600;
-                canvas.height = 400;
+                canvas.height = 200;
+
+                this.dino = { x: 50, y: 140, width: 40, height: 40, velocityY: 0, jumping: false };
+                this.gravity = 0.6;
+                this.jumpPower = -12;
+                this.obstacles = [];
+                this.score = 0;
+                this.gameOver = false;
+                this.gameOverAnnounced = false;
+                this.speed = 5;
+                this.frameCount = 0;
+
+                document.addEventListener('keydown', (e) => {
+                    if ((e.key === ' ' || e.key === 'ArrowUp') && !this.dino.jumping && !this.gameOver) {
+                        this.dino.velocityY = this.jumpPower;
+                        this.dino.jumping = true;
+                    }
+                });
+
+                document.addEventListener('click', () => {
+                    if (!this.dino.jumping && !this.gameOver) {
+                        this.dino.velocityY = this.jumpPower;
+                        this.dino.jumping = true;
+                    }
+                });
+            }
+
+            update() {
+                if (this.gameOver) return;
+
+                // Update dino
+                this.dino.velocityY += this.gravity;
+                this.dino.y += this.dino.velocityY;
+
+                // Ground collision
+                if (this.dino.y >= 140) {
+                    this.dino.y = 140;
+                    this.dino.velocityY = 0;
+                    this.dino.jumping = false;
+                }
+
+                // Spawn obstacles
+                this.frameCount++;
+                if (this.frameCount % 90 === 0) {
+                    const height = 20 + Math.random() * 30;
+                    this.obstacles.push({ x: canvas.width, width: 20, height: height });
+                }
+
+                // Update obstacles
+                for (let i = this.obstacles.length - 1; i >= 0; i--) {
+                    this.obstacles[i].x -= this.speed;
+
+                    // Remove off-screen obstacles
+                    if (this.obstacles[i].x + this.obstacles[i].width < 0) {
+                        this.obstacles.splice(i, 1);
+                        this.score += 10;
+                        if (this.score % 100 === 0) this.speed += 0.5; // Speed up
+                    }
+
+                    // Collision detection
+                    if (this.obstacles[i] &&
+                        this.dino.x < this.obstacles[i].x + this.obstacles[i].width &&
+                        this.dino.x + this.dino.width > this.obstacles[i].x &&
+                        this.dino.y + this.dino.height > canvas.height - this.obstacles[i].height) {
+                        this.gameOver = true;
+                        if (!this.gameOverAnnounced && window.announceToScreenReader) {
+                            window.announceToScreenReader(`Game Over! Final score: ${this.score}`);
+                            this.gameOverAnnounced = true;
+                        }
+                    }
+                }
+            }
+
+            draw() {
+                // Sky
+                ctx.fillStyle = '#f7f7f7';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Ground
+                ctx.fillStyle = '#535353';
+                ctx.fillRect(0, 180, canvas.width, 2);
+
+                // Dino
+                ctx.fillStyle = '#535353';
+                ctx.fillRect(this.dino.x, this.dino.y, this.dino.width, this.dino.height);
+
+                // Dino eye
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(this.dino.x + 30, this.dino.y + 5, 6, 6);
+
+                // Obstacles (cacti)
+                ctx.fillStyle = '#535353';
+                this.obstacles.forEach(obstacle => {
+                    ctx.fillRect(obstacle.x, canvas.height - obstacle.height, obstacle.width, obstacle.height);
+                });
+
+                // Score
+                document.getElementById('scoreDisplay').textContent = `Score: ${this.score}`;
+
+                // Game over
+                if (this.gameOver) {
+                    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'white';
+                    ctx.font = '36px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Game Over!', canvas.width / 2, canvas.height / 2);
+                    ctx.font = '20px Arial';
+                    ctx.fillText(`Score: ${this.score}`, canvas.width / 2, canvas.height / 2 + 30);
+                }
+            }
+        }
+
+        // Game 7: Memory Match
+        class MemoryGame {
+            constructor() {
+                canvas.width = 500;
+                canvas.height = 500;
 
                 this.cols = 4;
                 this.rows = 4;
-                this.cardWidth = 80;
+                this.cardWidth = 100;
                 this.cardHeight = 100;
-                this.padding = 20;
+                this.padding = 15;
 
                 const symbols = ['🦣', '💜', '🎮', '⭐', '🎨', '🎵', '🚀', '🌟'];
                 const cards = [...symbols, ...symbols];
                 this.cards = cards.sort(() => Math.random() - 0.5).map((symbol, i) => ({
                     symbol,
-                    x: (i % this.cols) * (this.cardWidth + this.padding) + 60,
-                    y: Math.floor(i / this.cols) * (this.cardHeight + this.padding) + 20,
+                    x: (i % this.cols) * (this.cardWidth + this.padding) + 10,
+                    y: Math.floor(i / this.cols) * (this.cardHeight + this.padding) + 10,
                     flipped: false,
                     matched: false
                 }));
@@ -1055,6 +1172,13 @@
                 class: SpaceInvadersGame,
                 instructions: 'Defend Earth from the alien invasion!',
                 controls: 'Arrow Left/Right: Move | Spacebar: Shoot | Goal: Defeat all aliens',
+                fps: 60
+            },
+            {
+                name: 'Dino Runner',
+                class: DinoGame,
+                instructions: 'Jump over cacti! Just like the Chrome offline game.',
+                controls: 'Spacebar or Click: Jump | Goal: Avoid obstacles',
                 fps: 60
             },
             {
