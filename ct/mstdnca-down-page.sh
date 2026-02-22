@@ -32,10 +32,10 @@ CL="\033[m"
 CM="${GN}✓${CL}"
 CROSS="${RD}✗${CL}"
 
-msg_info()  { echo -e "${YW}  [INFO]${CL} $1"; }
-msg_ok()    { echo -e "  ${CM} $1"; }
-msg_warn()  { echo -e "  ${YW}[WARN]${CL} $1"; }
-msg_error() { echo -e "  ${CROSS} ${RD}$1${CL}"; exit 1; }
+msg_info()  { echo -e "${YW}  [INFO]${CL} $1" >&2; }
+msg_ok()    { echo -e "  ${CM} $1" >&2; }
+msg_warn()  { echo -e "  ${YW}[WARN]${CL} $1" >&2; }
+msg_error() { echo -e "  ${CROSS} ${RD}$1${CL}" >&2; exit 1; }
 
 # ---------------------------------------------------------------------------
 # Defaults (override interactively below)
