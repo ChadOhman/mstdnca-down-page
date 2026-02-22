@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # mstdn.ca Maintenance Page - Proxmox LXC Container Creator
 #
-# Usage (run on the Proxmox host shell from the repo root):
-#   bash ct/mstdnca-down-page.sh
+# One-liner (paste into Proxmox host shell — no clone needed):
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/ChadOhman/mstdnca-down-page/main/ct/mstdnca-down-page.sh)"
 #
 # What it does:
 #   1. Prompts for container settings (or accepts defaults)
@@ -15,11 +15,11 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Paths
+# Source
 # ---------------------------------------------------------------------------
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(dirname "$SCRIPT_DIR")"
-INSTALL_SCRIPT="${SCRIPT_DIR}/../install/mstdnca-down-page-install.sh"
+GITHUB_RAW="https://raw.githubusercontent.com/ChadOhman/mstdnca-down-page/main"
+TMPDIR_WORK="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR_WORK"' EXIT
 
 # ---------------------------------------------------------------------------
 # Colours
@@ -71,14 +71,27 @@ check_root() {
 }
 
 check_proxmox() {
-    command -v pct &>/dev/null || msg_error "pct not found — is this a Proxmox VE host?"
+    command -v pct   &>/dev/null || msg_error "pct not found — is this a Proxmox VE host?"
     command -v pvesh &>/dev/null || msg_error "pvesh not found — is this a Proxmox VE host?"
 }
 
-check_files() {
-    [[ -f "${REPO_DIR}/index.html" ]]  || msg_error "index.html not found at ${REPO_DIR}/index.html"
-    [[ -f "${REPO_DIR}/scores.php" ]]  || msg_error "scores.php not found at ${REPO_DIR}/scores.php"
-    [[ -f "$INSTALL_SCRIPT" ]]         || msg_error "Install script not found at ${INSTALL_SCRIPT}"
+check_curl() {
+    command -v curl &>/dev/null || msg_error "curl is required but not installed on the Proxmox host."
+}
+
+# ---------------------------------------------------------------------------
+# Download app files from GitHub to a temp dir on the host
+# ---------------------------------------------------------------------------
+fetch_files() {
+    msg_info "Fetching application files from GitHub..."
+    curl -fsSL "${GITHUB_RAW}/index.html"                          -o "${TMPDIR_WORK}/index.html" \
+        || msg_error "Failed to download index.html"
+    curl -fsSL "${GITHUB_RAW}/scores.php"                          -o "${TMPDIR_WORK}/scores.php" \
+        || msg_error "Failed to download scores.php"
+    curl -fsSL "${GITHUB_RAW}/install/mstdnca-down-page-install.sh" -o "${TMPDIR_WORK}/install.sh" \
+        || msg_error "Failed to download install script"
+    chmod +x "${TMPDIR_WORK}/install.sh"
+    msg_ok "Files fetched."
 }
 
 # ---------------------------------------------------------------------------
@@ -92,7 +105,6 @@ select_storage() {
         msg_error "No storage found that supports container rootfs. Create one in the Proxmox UI first."
     fi
 
-    # Pick the first available as default
     STORAGE=$(echo "$storages" | head -1)
 
     echo -e "\n${YW}  Storages available for container rootfs:${CL}"
@@ -105,7 +117,6 @@ select_storage() {
 # Interactive configuration
 # ---------------------------------------------------------------------------
 configure() {
-    # Next available CTID
     CTID=$(pvesh get /cluster/nextid 2>/dev/null || echo "100")
 
     echo -e "${YW}\n  Container configuration (press Enter to accept defaults):${CL}\n"
@@ -123,7 +134,6 @@ configure() {
 # Template
 # ---------------------------------------------------------------------------
 get_template() {
-    # Look for an existing Debian 12 template
     local template
     template=$(pveam list "$TEMPLATE_STORAGE" 2>/dev/null \
         | awk '/debian-12/ {print $1}' \
@@ -166,18 +176,18 @@ create_ct() {
     msg_info "Creating container ${CTID} (${HOSTNAME}) from ${template}..."
 
     pct create "$CTID" "$template" \
-        --hostname    "$HOSTNAME" \
-        --storage     "$STORAGE" \
-        --rootfs      "${STORAGE}:${DISK_SIZE}" \
-        --memory      "$RAM" \
-        --cores       "$CPU" \
-        --net0        "name=eth0,bridge=${BRIDGE},ip=dhcp,ip6=auto" \
+        --hostname     "$HOSTNAME" \
+        --storage      "$STORAGE" \
+        --rootfs       "${STORAGE}:${DISK_SIZE}" \
+        --memory       "$RAM" \
+        --cores        "$CPU" \
+        --net0         "name=eth0,bridge=${BRIDGE},ip=dhcp,ip6=auto" \
         --unprivileged "$UNPRIVILEGED" \
-        --features    nesting=1 \
-        --ostype      debian \
-        --onboot      "$START_ON_BOOT" \
-        --timezone    host \
-        --start       1
+        --features     nesting=1 \
+        --ostype       debian \
+        --onboot       "$START_ON_BOOT" \
+        --timezone     host \
+        --start        1
 
     msg_ok "Container ${CTID} created and started."
 }
@@ -189,14 +199,9 @@ wait_for_boot() {
     msg_info "Waiting for container to boot..."
     local attempts=30
     while [[ $attempts -gt 0 ]]; do
-        if pct exec "$CTID" -- systemctl is-system-running --quiet 2>/dev/null; then
-            msg_ok "Container is ready."
-            return 0
-        fi
-        # Also accept degraded (common on minimal containers)
         local state
         state=$(pct exec "$CTID" -- systemctl is-system-running 2>/dev/null || echo "starting")
-        if [[ "$state" == "degraded" || "$state" == "running" ]]; then
+        if [[ "$state" == "running" || "$state" == "degraded" ]]; then
             msg_ok "Container is ready (state: ${state})."
             return 0
         fi
@@ -211,18 +216,13 @@ wait_for_boot() {
 # ---------------------------------------------------------------------------
 deploy_app() {
     msg_info "Pushing application files into container..."
-
-    # Ensure web root directory exists
     pct exec "$CTID" -- mkdir -p /var/www/maintenance
-
-    # Push application files
-    pct push "$CTID" "${REPO_DIR}/index.html"  /var/www/maintenance/index.html
-    pct push "$CTID" "${REPO_DIR}/scores.php"  /var/www/maintenance/scores.php
+    pct push "$CTID" "${TMPDIR_WORK}/index.html" /var/www/maintenance/index.html
+    pct push "$CTID" "${TMPDIR_WORK}/scores.php"  /var/www/maintenance/scores.php
     msg_ok "Application files pushed."
 
-    # Push and run install script
     msg_info "Running install script inside container..."
-    pct push "$CTID" "$INSTALL_SCRIPT" /tmp/mstdn-install.sh
+    pct push "$CTID" "${TMPDIR_WORK}/install.sh" /tmp/mstdn-install.sh
     pct exec "$CTID" -- bash /tmp/mstdn-install.sh
     msg_ok "Install script completed."
 }
@@ -232,7 +232,8 @@ deploy_app() {
 # ---------------------------------------------------------------------------
 print_result() {
     local ip
-    ip=$(pct exec "$CTID" -- hostname -I 2>/dev/null | awk '{print $1}') || ip="(check with: pct exec ${CTID} -- hostname -I)"
+    ip=$(pct exec "$CTID" -- hostname -I 2>/dev/null | awk '{print $1}') \
+        || ip="(check with: pct exec ${CTID} -- hostname -I)"
 
     echo ""
     echo -e "${GN}  ╔══════════════════════════════════════════════════╗
@@ -258,7 +259,8 @@ print_result() {
 header_info
 check_root
 check_proxmox
-check_files
+check_curl
+fetch_files
 configure
 create_ct
 wait_for_boot

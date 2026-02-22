@@ -4,10 +4,10 @@ A fun, interactive maintenance page for Mastodon instances featuring 7 different
 
 ## Quick Start — Proxmox LXC Container (One-Click)
 
-Run this on your **Proxmox host shell** from the cloned repo:
+Paste this single command into your **Proxmox host shell** — no clone needed:
 
 ```bash
-bash ct/mstdnca-down-page.sh
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/ChadOhman/mstdnca-down-page/main/ct/mstdnca-down-page.sh)"
 ```
 
 The script will:
@@ -17,7 +17,7 @@ The script will:
 4. Install nginx + PHP 8.2-FPM and deploy the maintenance page
 5. Print the container's IP and access URL
 
-**Requirements:** run as root on a Proxmox VE 7 or 8 host with internet access for the initial template download.
+**Requirements:** run as root on a Proxmox VE 7 or 8 host.
 
 ---
 
