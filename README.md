@@ -2,6 +2,25 @@
 
 A fun, interactive maintenance page for Mastodon instances featuring 7 different mini-games with a high score system. Games randomly display when users visit during downtime.
 
+## Quick Start — Proxmox LXC Container (One-Click)
+
+Run this on your **Proxmox host shell** from the cloned repo:
+
+```bash
+bash ct/mstdnca-down-page.sh
+```
+
+The script will:
+1. Ask for container settings (ID, hostname, disk, RAM, CPU, bridge, storage — all have sensible defaults)
+2. Download a Debian 12 template if one isn't already present
+3. Create and start an unprivileged LXC container
+4. Install nginx + PHP 8.2-FPM and deploy the maintenance page
+5. Print the container's IP and access URL
+
+**Requirements:** run as root on a Proxmox VE 7 or 8 host with internet access for the initial template download.
+
+---
+
 ## Quick Start with Docker (Recommended)
 
 The fastest way to run this maintenance page is with Docker:
