@@ -50,6 +50,7 @@ STORAGE=""
 TEMPLATE_STORAGE="local"
 UNPRIVILEGED=1
 START_ON_BOOT=1
+CT_PASSWORD=""
 
 # ---------------------------------------------------------------------------
 # Header
@@ -118,6 +119,7 @@ select_storage() {
 # ---------------------------------------------------------------------------
 configure() {
     CTID=$(pvesh get /cluster/nextid 2>/dev/null || echo "100")
+    CT_PASSWORD=$(tr -dc 'A-Za-z0-9!@#%^&*' </dev/urandom | head -c 20)
 
     echo -e "${YW}\n  Container configuration (press Enter to accept defaults):${CL}\n"
     read -r -p "  Container ID   [${CTID}]:          " input; CTID="${input:-$CTID}"
@@ -187,6 +189,7 @@ create_ct() {
         --ostype       debian \
         --onboot       "$START_ON_BOOT" \
         --timezone     host \
+        --password     "$CT_PASSWORD" \
         --start        1
 
     msg_ok "Container ${CTID} created and started."
@@ -244,6 +247,8 @@ print_result() {
     echo -e "  Hostname     : ${YW}${HOSTNAME}${CL}"
     echo -e "  IP address   : ${YW}${ip}${CL}"
     echo -e "  Access URL   : ${BL}http://${ip}/${CL}"
+    echo -e "  Username     : ${YW}root${CL}"
+    echo -e "  Password     : ${YW}${CT_PASSWORD}${CL}"
     echo ""
     echo -e "  ${YW}Tips:${CL}"
     echo -e "    • Open a shell in the CT : pct enter ${CTID}"
