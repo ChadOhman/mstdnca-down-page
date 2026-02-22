@@ -78,7 +78,6 @@ server {
 
     # All other requests → 503 maintenance page
     location / {
-        try_files /index.html =503;
         add_header Retry-After 3600 always;
         add_header Cache-Control "no-cache, no-store, must-revalidate" always;
         add_header Pragma "no-cache" always;
@@ -108,7 +107,7 @@ msg_info "Enabling and starting services..."
 systemctl enable php${PHP_VER}-fpm --quiet
 systemctl start  php${PHP_VER}-fpm
 systemctl enable nginx --quiet
-systemctl start  nginx
+systemctl restart nginx
 msg_ok "Services started."
 
 # Final check
